@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Студлидер КемГУ</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --primary-hover: #357ABD;
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app {
+            background: var(--card-bg);
+            max-width: 600px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.4s forwards;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.4s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--text-main);
+        }
+
+        .question-number {
+            font-size: 0.9em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        /* Options */
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: var(--card-bg);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 1em;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition);
+            line-height: 1.4;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 144, 226, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Welcome & Results Screens */
+        .welcome-title, .result-title {
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .welcome-desc {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .result-desc {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .result-advice {
+            background-color: rgba(74, 144, 226, 0.1);
+            padding: 15px;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .primary-btn {
+            margin-top: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .primary-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+        }
+
+        /* Screens Visibility */
+        #welcome-screen, #quiz-screen, #result-screen {
+            display: none;
+        }
+        
+        #welcome-screen.active, #quiz-screen.active, #result-screen.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            #app { padding: 20px; }
+            .question-text { font-size: 1.1em; }
+            .option-btn { padding: 14px; font-size: 0.95em; }
+            .welcome-title { font-size: 1.6em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div id="welcome-screen" class="active">
+            <div class="fade-in">
+                <h1 class="welcome-title">Кто ты на Студенческом лидере КемГУ?</h1>
+                <p class="welcome-desc">Ответьте на 10 вопросов, чтобы узнать свою истинную роль на мероприятии.</p>
+                <button class="primary-btn" onclick="startQuiz()">Начать викторину</button>
+            </div>
+        </div>
+
+        <div id="quiz-screen">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div id="quiz-content" class="fade-in">
+                <div class="question-number" id="question-number">Вопрос 1 из 10</div>
+                <div class="question-text" id="question-text">Текст вопроса</div>
+                <div class="options-grid" id="options-grid">
+                    </div>
+            </div>
+        </div>
+
+        <div id="result-screen">
+            <div id="result-content" class="fade-in">
+                <h2>Твоя роль:</h2>
+                <div class="result-title" id="result-title">Роль</div>
+                <div class="result-desc" id="result-desc">Описание роли</div>
+                <div class="result-advice" id="result-advice">Совет</div>
+                <button class="primary-btn" onclick="showWelcomeScreen()">На главную</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "Тебе предложили выступить с речью на 3 минуты. Твои действия?",
+                options: [
+                    { text: "Начну готовить текст сразу: репетирую, тайминг, жесты всё по плану", category: "A" },
+                    { text: "Подумаю, какая структура речи будет наиболее убедительной для слушателей", category: "B" },
+                    { text: "Позову друзей послушать репетицию — вместе веселее и меньше волнения", category: "AB" },
+                    { text: "Уточню технические детали: микрофон, презентация, время выхода на сцену", category: "C" }
+                ]
+            },
+            {
+                text: "В чате конкурса возник спор по поводу критериев оценки. Как ты отреагируешь?",
+                options: [
+                    { text: "Предложу свой вариант — вдруг он окажется самым ярким и запоминающимся?", category: "A" },
+                    { text: "Попрошу ссылку на официальное положение, чтобы разобраться в нюансах", category: "B" },
+                    { text: "Напишу что-то поддерживающее, чтобы снизить градус напряжения в чате", category: "AB" },
+                    { text: "Предложу созвониться и быстро зафиксировать решение, чтобы двигаться дальше", category: "C" }
+                ]
+            },
+            {
+                text: "Ты опаздываешь на важное мероприятие конкурса. Что сделаешь?",
+                options: [
+                    { text: "Побегу быстрее и по дороге придумаю оправдание с юмором — сработает!", category: "A" },
+                    { text: "Оценю, насколько критично опоздание: можно ли войти незаметно или лучше подождать паузы", category: "B" },
+                    { text: "Напишу в чат: «Ребята, я почти! Ждите, без меня не начинайте!»", category: "AB" },
+                    { text: "Сразу позвоню ответственному, предупрежу и уточню, как лучше войти, чтобы не сорвать программу", category: "C" }
+                ]
+            },
+            {
+                text: "Тебе нужно выбрать, в каком задании конкурса проявить себя. Что выберешь?",
+                options: [
+                    { text: "То, где можно показать харизму, креатив и личный бренд", category: "A" },
+                    { text: "То, где важны логика, аргументы и глубина проработки темы", category: "B" },
+                    { text: "То, где будет много людей, эмоций и возможностей для нетворкинга", category: "AB" },
+                    { text: "То, где мой вклад поможет не только мне, но и всей команде/мероприятию", category: "C" }
+                ]
+            },
+            {
+                text: "Как ты относишься к обратной связи после выступления?",
+                options: [
+                    { text: "Люблю, когда хвалят! Критику тоже принимаю, но сначала аплодисменты", category: "A" },
+                    { text: "Ценю конкретные, аргументированные замечания — они помогают расти", category: "B" },
+                    { text: "Мне важно, чтобы фидбэк был доброжелательным — тогда я открыт(а) к диалогу", category: "AB" },
+                    { text: "Считаю, что обратная связь должна быть системной: не только «понравилось/не понравилось», а с рекомендациями", category: "C" }
+                ]
+            },
+            {
+                text: "Ты видишь, что у участника возникла техническая проблема прямо перед выходом. Твоя реакция?",
+                options: [
+                    { text: "Подбодрю шуткой: «Главное — не паниковать, зрители простят!»", category: "A" },
+                    { text: "Спокойно объясню, как можно адаптировать выступление под новые условия", category: "B" },
+                    { text: "Побуду рядом, поддержу морально — иногда это важнее решения проблемы", category: "AB" },
+                    { text: "Быстро найду того, кто может помочь технически, или предложу запасной вариант", category: "C" }
+                ]
+            },
+            {
+                text: "Как ты готовишься к мероприятию, где будет много незнакомых людей?",
+                options: [
+                    { text: "Продумаю, как ярко представить себя и запомниться", category: "A" },
+                    { text: "Изучу список участников и организаторов — чтобы понимать контекст общения", category: "B" },
+                    { text: "Возьму с собой «социальный ледокол»: конфеты, стикеры или интересную историю для старта беседы", category: "AB" },
+                    { text: "Заранее уточню программу, локации и контактных лиц — чтобы чувствовать себя увереннее", category: "C" }
+                ]
+            },
+            {
+                text: "Что для тебя «успешное участие» в конкурсе?",
+                options: [
+                    { text: "Когда я вышел(а) за пределы зоны комфорта и получил(а) новые эмоции", category: "A" },
+                    { text: "Когда мои идеи были оценены по достоинству, даже если не занял(а) первое место", category: "B" },
+                    { text: "Когда я познакомился(ась) с крутыми людьми и получил(а) заряд мотивации", category: "AB" },
+                    { text: "Когда всё прошло гладко, и я чувствую, что внёс(ла) реальный вклад в общее дело", category: "C" }
+                ]
+            },
+            {
+                text: "Тебе нужно принять быстрое решение в нестандартной ситуации. Как действуешь?",
+                options: [
+                    { text: "Доверюсь интуиции и харизме — импровизация часто даёт лучший результат", category: "A" },
+                    { text: "Быстро проанализирую плюсы/минусы и выберу наиболее логичный вариант", category: "B" },
+                    { text: "Спрошу совета у тех, кто рядом — вместе мы точно найдём выход", category: "AB" },
+                    { text: "Ориентируюсь на регламент и цели мероприятия, чтобы решение было эффективным", category: "C" }
+                ]
+            },
+            {
+                text: "После конкурса ты чаще всего...",
+                options: [
+                    { text: "Делишься впечатлениями в соцсетях и ждёшь реакций", category: "A" },
+                    { text: "Анализируешь, что можно было сделать лучше, и фиксируешь выводы", category: "B" },
+                    { text: "Пишешь участникам и организаторам тёплые слова благодарности", category: "AB" },
+                    { text: "Составляешь короткий отчёт или чек-лист для следующего раза", category: "C" }
+                ]
+            }
+        ];
+
+        const resultsData = {
+            "A": {
+                title: "Конкурсант",
+                desc: "Ты — человек-энергия! Любишь быть в центре внимания, не боишься импровизировать и умеешь превращать вызовы в возможности. Твой конёк — харизма и смелость.",
+                advice: "Совет: доверяй себе, но не забывай про подготовку — и кубок может стать твоим!"
+            },
+            "B": {
+                title: "Жюри",
+                desc: "Ты - аналитик с душой. Ценишь справедливость, глубину и аргументы. Умеешь видеть суть за эмоциями и давать обратную связь, которая действительно помогает.",
+                advice: "Совет: не бойся иногда включать «режим болельщика» — даже самым строгим экспертам нужна эмоциональная разгрузка!"
+            },
+            "AB": {
+                title: "Болельщик",
+                desc: "Ты — сердце любого мероприятия! Создаёшь атмосферу, поддерживаешь, вдохновляешь. Без тебя конкурс был бы просто набором заданий.",
+                advice: "Совет: твоя суперсила — эмпатия. Иногда именно твоё слово может стать решающим для участника. Не недооценивай свою роль!"
+            },
+            "C": {
+                title: "Организатор",
+                desc: "Ты - человек-система! Видишь картину целиком, предугадываешь риски и находишь решения там, где другие видят тупик. Без тебя всё развалится... но ты об этом скромно молчишь.",
+                advice: "Совет: не забывай хвалить себя — твои усилия действительно меняют мир (ну, или хотя бы аудиторию вуза)!"
+            }
+        };
+
+        const combos = {
+            "A_B": { title: "«Критик-перформер»", desc: "Конкурсант + Жюри: ты и выступишь ярко, и оценишь других справедливо. Идеальный участник финала!" },
+            "A_AB": { title: "«Звезда поддержки»", desc: "Конкурсант + Болельщик: твоя энергия заряжает всех вокруг. Ты не просто участвуешь — ты создаёшь настроение!" },
+            "B_C": { title: "«Архитектор справедливости»", desc: "Жюри + Организатор: ты обеспечиваешь и качество, и порядок. Без тебя конкурс не был бы таким профессиональным." },
+            "AB_C": { title: "«Душа процесса»", desc: "Болельщик + Организатор: ты и атмосферу создашь, и проследишь, чтобы всё прошло по плану. Незаменимый человек!" },
+            "universal": { title: "«Профсоюзный универсал»", desc: "Ты легко адаптируешься к любой роли. Сегодня - участник, завтра — организатор, послезавтра — эксперт. Гордость вуза!" }
+        };
+
+        let currentQuestion = 0;
+        let scores = { "A": 0, "B": 0, "AB": 0, "C": 0 };
+
+        const uiElements = {
+            welcomeScreen: document.getElementById('welcome-screen'),
+            quizScreen: document.getElementById('quiz-screen'),
+            resultScreen: document.getElementById('result-screen'),
+            quizContent: document.getElementById('quiz-content'),
+            questionNum: document.getElementById('question-number'),
+            questionText: document.getElementById('question-text'),
+            optionsGrid: document.getElementById('options-grid'),
+            progressBar: document.getElementById('progress-bar'),
+            resTitle: document.getElementById('result-title'),
+            resDesc: document.getElementById('result-desc'),
+            resAdvice: document.getElementById('result-advice')
+        };
+
+        function showWelcomeScreen() {
+            uiElements.resultScreen.classList.remove('active');
+            uiElements.quizScreen.classList.remove('active');
+            uiElements.welcomeScreen.classList.add('active');
+        }
+
+        function startQuiz() {
+            currentQuestion = 0;
+            scores = { "A": 0, "B": 0, "AB": 0, "C": 0 };
+            uiElements.welcomeScreen.classList.remove('active');
+            uiElements.resultScreen.classList.remove('active');
+            uiElements.quizScreen.classList.add('active');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            uiElements.questionNum.textContent = `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+            uiElements.questionText.textContent = q.text;
+            
+            const progress = ((currentQuestion) / questions.length) * 100;
+            uiElements.progressBar.style.width = `${progress}%`;
+
+            uiElements.optionsGrid.innerHTML = '';
+            
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt.text;
+                btn.onclick = () => handleAnswer(opt.category);
+                uiElements.optionsGrid.appendChild(btn);
+            });
+
+            uiElements.quizContent.classList.remove('fade-out');
+            uiElements.quizContent.classList.add('fade-in');
+        }
+
+        function handleAnswer(category) {
+            scores[category]++;
+            
+            uiElements.quizContent.classList.remove('fade-in');
+            uiElements.quizContent.classList.add('fade-out');
+
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < questions.length) {
+                    renderQuestion();
+                } else {
+                    showResults();
+                }
+            }, 400); 
+        }
+
+        function showResults() {
+            uiElements.progressBar.style.width = '100%';
+            uiElements.quizScreen.classList.remove('active');
+            uiElements.resultScreen.classList.add('active');
+
+            let maxScore = 0;
+            let topCategories = [];
+
+            for (const cat in scores) {
+                if (scores[cat] > maxScore) {
+                    maxScore = scores[cat];
+                    topCategories = [cat];
+                } else if (scores[cat] === maxScore) {
+                    topCategories.push(cat);
+                }
+            }
+
+            let resultNode;
+
+            if (topCategories.length === 1) {
+                resultNode = resultsData[topCategories[0]];
+                uiElements.resAdvice.style.display = 'block';
+                uiElements.resAdvice.textContent = resultNode.advice;
+            } else if (topCategories.length === 2) {
+                const comboKey1 = `${topCategories[0]}_${topCategories[1]}`;
+                const comboKey2 = `${topCategories[1]}_${topCategories[0]}`;
+                
+                let comboMatch = combos[comboKey1] || combos[comboKey2];
+                if (!comboMatch) comboMatch = combos["universal"]; 
+
+                resultNode = comboMatch;
+                uiElements.resAdvice.style.display = 'none';
+            } else {
+                resultNode = combos["universal"];
+                uiElements.resAdvice.style.display = 'none';
+            }
+
+            uiElements.resTitle.textContent = resultNode.title;
+            uiElements.resDesc.textContent = resultNode.desc;
+        }
+    </script>
+</body>
+</html>
